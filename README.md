@@ -167,6 +167,6 @@ falhado, que era o que a gente queria confirmar.
 ## Arquivos no repositório
 
 - `Main.hs` — o código todo
-- `Inventario.dat` — um estado de exemplo já com 10 itens (atende o mínimo pedido)
+- `Inventario.dat` — um estado de exemplo já com 10 itens.
 - `Auditoria.log` — um log de exemplo, com uma falha incluída pra dar pra testar o `report`
 - `README.md` — este arquivo
