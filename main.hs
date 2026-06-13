@@ -109,15 +109,52 @@ logEntryFalha t ac det msg = LogEntry t ac det (Falha msg)
 
 -- Relatorios sobre o log - funcoes puras  (Matheus)
 
-historicoPorItem = undefined
+-- Pega tudo que aconteceu com um item especifico
+historicoPorItem :: String -> [LogEntry] -> [LogEntry]
+historicoPorItem iid = filter (\e -> iid `isInfixOf` detalhes e)
 
-logsDeErro = undefined
+-- So as linhas que deram erro
+logsDeErro :: [LogEntry] -> [LogEntry]
+logsDeErro = filter isFalha
+  where isFalha e = case status e of
+                      Falha _ -> True
+                      Sucesso -> False
 
-itemMaisMovimentado = undefined
+-- Qual item mais apareceu nas operacoes (id e quantas vezes)
+itemMaisMovimentado :: [LogEntry] -> Maybe (String, Int)
+itemMaisMovimentado entries =
+  let nomes = concatMap extrai entries
+      contagem = Map.toList (Map.fromListWith (+) [(x, 1) | x <- nomes])
+  in if null contagem
+       then Nothing
+       else Just (head (sortBy (flip (comparing snd)) contagem))
+  where
+    -- a gente guarda o id no detalhe como "id=algumacoisa", entao e so pegar isso
+    extrai e = case filter (\w -> take 3 w == "id=") (words (detalhes e)) of
+      (w:_) -> [drop 3 w]
+      []    -> []
 
-gerarRelatorio = undefined
+-- Junta os relatorios e mostra na tela
+gerarRelatorio :: [LogEntry] -> IO ()
+gerarRelatorio logs = do
+  putStrLn "\nRelatorio de logs"
+  putStrLn ("Total de entradas: " ++ show (length logs))
 
-formataEntry = undefined
+  putStrLn "\n-- Logs de Erro (logsDeErro) --"
+  let erros = logsDeErro logs
+  if null erros
+    then putStrLn "  Nenhum erro registrado."
+    else mapM_ (putStrLn . ("  " ++) . formataEntry) erros
+
+  putStrLn "\n-- Item Mais Movimentado (itemMaisMovimentado) --"
+  case itemMaisMovimentado logs of
+    Nothing -> putStrLn "  Nenhuma movimentacao registrada."
+    Just (iid, n) -> putStrLn ("  " ++ iid ++ " (" ++ show n ++ " operacoes)")
+  putStrLn ""
+
+-- Deixa uma linha de log legivel pra mostrar na tela
+formataEntry :: LogEntry -> String
+formataEntry e = show (acao e) ++ " | " ++ detalhes e ++ " | " ++ show (status e)
 
 
 -- Parte de I/O e persistencia  (Joao)
